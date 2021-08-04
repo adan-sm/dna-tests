@@ -62,6 +62,8 @@ struct tInternalCall_ {
 	U8 parameterTypes[MAX_PARAMS];
 };
 
+tAsyncCall* Gimme_Plugged_Method(PTR pThis_, PTR pParams, PTR pReturnValue);
+
 static tInternalCall internalCalls[] = {
 	{"System", "Object", "Equals", System_Object_Equals, TYPE_SYSTEM_BOOLEAN, 1, {TYPE_SYSTEM_OBJECT}},
 	{NULL,      NULL,    "Clone", System_Object_Clone, TYPE_SYSTEM_OBJECT, 1, {TYPE_SYSTEM_OBJECT}},
@@ -168,6 +170,8 @@ static tInternalCall internalCalls[] = {
 	{NULL,                 NULL,     "Internal_Connect", System_Net_Sockets_Internal_Connect, TYPE_SYSTEM_VOID, 4, {TYPE_SYSTEM_INTPTR, TYPE_SYSTEM_UINT32, TYPE_SYSTEM_INT32, TYPE_SYSTEM_INTPTR}},
 	{NULL,                 NULL,     "Internal_Receive", System_Net_Sockets_Internal_Receive, TYPE_SYSTEM_INT32, 6, {TYPE_SYSTEM_INTPTR, TYPE_SYSTEM_ARRAY_BYTE, TYPE_SYSTEM_INT32, TYPE_SYSTEM_INT32, TYPE_SYSTEM_INT32, TYPE_SYSTEM_INTPTR}},
 	{NULL,                 NULL,     "Internal_Send", System_Net_Sockets_Internal_Send, TYPE_SYSTEM_INT32, 6, {TYPE_SYSTEM_INTPTR, TYPE_SYSTEM_ARRAY_BYTE, TYPE_SYSTEM_INT32, TYPE_SYSTEM_INT32, TYPE_SYSTEM_INT32, TYPE_SYSTEM_INTPTR}},
+	
+	{"ConsoleApp1", "Program", "gimme", Gimme_Plugged_Method, TYPE_SYSTEM_STRING, 0 },
 
 	{NULL, NULL, NULL, NULL}
 };
@@ -204,4 +208,12 @@ fnInternalCall InternalCall_Map(tMD_MethodDef *pMethod) {
 	}
 	Crash("InternalCall_Map(): Cannot map [%s]%s.%s", pMethod->pParentType->nameSpace, pMethod->pParentType->name, pMethod->name);
 	FAKE_RETURN;
+}
+
+static
+tAsyncCall* Gimme_Plugged_Method(PTR pThis_, PTR pParams, PTR pReturnValue) {
+	HEAP_PTR strResult = SystemString_FromCharPtrASCII("Basic test");
+	*(HEAP_PTR*)pReturnValue = strResult;
+
+	return NULL;
 }
