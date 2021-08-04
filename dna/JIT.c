@@ -46,6 +46,17 @@
 #define DYNAMIC_EX_END 0x800
 #define DYNAMIC_BYTE_COUNT_MASK 0xff
 
+static int starts_with(const char* string, const char* prefix)
+{
+	while (*prefix)
+	{
+		if (*prefix++ != *string++)
+			return 0;
+	}
+
+	return 1;
+}
+
 typedef struct tOps_ tOps;
 struct tOps_ {
 	U32 *p;
@@ -1068,6 +1079,12 @@ conv2:
 						pTypeDef = MetaData_GetTypeDefFromMethodDef(pConstructorDef);
 						MetaData_Fill_TypeDef(pTypeDef, NULL, NULL);
 					}
+
+					if (starts_with(pConstructorDef->pParentType->name, "List`1"))
+					{
+						Crash("Usage of List<> is restricted");
+					}
+
 					if (pConstructorDef->pParentType->isValueType) {
 						PushOp(JIT_NEWOBJECT_VALUETYPE);
 					} else {
