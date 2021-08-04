@@ -26,8 +26,23 @@
 #include "Type.h"
 #include "Heap.h"
 #include "Finalizer.h"
+#include "System.String.h"
+#include "System.Array.h"
 #include "System.Net.Sockets.Socket.h"
 #include "MethodState.h"
+#include "dna.h"
+
+static tMD_MethodDef* FindMethodInTypeByName(tMD_TypeDef* pTypeDef, STRING name)
+{
+	for (int i = 0; i < pTypeDef->numMethods; i++) {
+		if (strcmp(name, pTypeDef->ppMethods[i]->name) == 0) {
+			return pTypeDef->ppMethods[i];
+		}
+	}
+
+	Crash("FindMethodInTypeByName(): Cannot find method %s)", name);
+	FAKE_RETURN;
+}
 
 static void ShowUsage() {
 	printf("Usage:\n");
@@ -99,11 +114,15 @@ doneArgs:;
 
 	pCLIFile = CLIFile_Load(pFileName);
 
+	tThread* pThread = CreateThreadToExecuteScript();
+
 #ifdef DIAG_TOTAL_TIME
 	startTime = microTime();
 #endif
 
-	retValue = CLIFile_Execute(pCLIFile, argc - i, argp + i);
+	Thread_Execute();
+
+//	retValue = CLIFile_Execute(pCLIFile, argc - i, argp + i);
 
 #ifdef DIAG_TOTAL_TIME
 	printf("Total execution time = %d ms\n", (int)((microTime() - startTime) / 1000));
@@ -207,4 +226,28 @@ doneArgs:;
 	//Crash("FINISHED!!!");
 
 	return retValue;
+}
+
+tThread* CreateThreadToExecuteScript()
+{
+	tMD_TypeDef* typeCalledFromHost = MetaData_GetTypeDefFromFullName("ConsoleApp1", "ConsoleApp1", "CalledFromHost");
+	MetaData_Fill_TypeDef(typeCalledFromHost, NULL, NULL);
+
+	tMD_MethodDef* methodExecuteScript = FindMethodInTypeByName(typeCalledFromHost, "ExecuteScript");
+
+	tThread* pThread;
+	pThread = Thread();
+
+	pThread->pCurrentMethodState = MethodState_Direct(pThread, methodExecuteScript, NULL, 0);
+
+
+	// TODO : this args is never deleted
+	HEAP_PTR arg = SystemString_FromCharPtrASCII("This parameter come from the host");
+	Heap_MakeUndeletable(arg);
+
+	const size_t size = sizeof(void *);
+
+	memcpy(pThread->pCurrentMethodState->pParamsLocals, &arg, size);
+
+	return pThread;
 }
